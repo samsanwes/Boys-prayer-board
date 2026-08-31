@@ -72,7 +72,7 @@ if(!r.ok){throw new Error('request failed');}
 return r;
 }
 async function load(){
-var r=await api('GET','?select=*&order=created_at.desc');
+var r=await api('GET','?select=*&order=sort_order.desc');
 prayers=await r.json();
 }
 function setStatus(id,msg){
