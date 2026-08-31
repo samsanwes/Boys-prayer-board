@@ -17,14 +17,17 @@ main{max-width:620px;margin:0 auto;padding:20px 16px;}
 input,textarea{width:100%;font-family:inherit;font-size:19px;padding:12px;border:1px solid var(--line);border-radius:8px;margin-bottom:14px;background:#fbfcfe;color:var(--ink);}
 .btn{display:inline-block;font-family:inherit;font-size:19px;padding:13px 26px;border:none;border-radius:8px;background:var(--ink);color:#fff;cursor:pointer;}
 h2{font-size:22px;font-weight:normal;margin:26px 0 12px;padding-bottom:6px;border-bottom:2px solid var(--gold);}
+h3{font-size:19px;font-weight:normal;color:var(--soft);margin:18px 0 10px;}
 .prayer{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:16px 18px;margin-bottom:12px;}
 .prayer .point{font-size:20px;font-weight:bold;margin-bottom:2px;}
 .prayer .meta{font-size:15px;color:var(--soft);margin-bottom:6px;}
 .prayer .text{font-size:19px;}
-.actions{margin-top:12px;display:flex;gap:10px;flex-wrap:wrap;}
+.actions{margin-top:12px;display:flex;gap:10px;flex-wrap:wrap;align-items:center;}
 .small-btn{font-family:inherit;font-size:16px;padding:8px 16px;border-radius:8px;border:1px solid var(--line);background:#fbfcfe;color:var(--ink);cursor:pointer;}
 .small-btn.answer{border-color:var(--green);color:var(--green);}
 .small-btn.danger{border-color:var(--red);color:var(--red);}
+.small-btn.move{padding:8px 14px;font-size:18px;line-height:1;}
+.small-btn:disabled{opacity:0.35;cursor:default;}
 .answered .text{color:var(--soft);}
 .answered-tag{color:var(--green);font-size:15px;}
 .tag{display:inline-block;font-size:14px;padding:2px 10px;border-radius:999px;border:1px solid var(--line);color:var(--soft);margin-left:6px;}
@@ -47,6 +50,7 @@ h2{font-size:22px;font-weight:normal;margin:26px 0 12px;padding-bottom:6px;borde
 <div id="adminArea" style="display:none">
 <div class="status" id="status"></div>
 <h2>Praying for</h2>
+<p style="color:var(--soft);font-size:16px;">Use the arrows to change the reading order within each category. The Monday list follows this order.</p>
 <div id="activeList"><div class="empty">Loading...</div></div>
 <h2>Thanksgiving (answered)</h2>
 <div id="answeredList"></div>
@@ -63,6 +67,7 @@ var SB_URL='https://irujnmfbefjpztovqwjx.supabase.co';
 var SB_KEY='sb_publishable_31eIEGWomuVnjU2qnjTdDw_DDlS8K-M';
 var HEADERS={'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY,'Content-Type':'application/json'};
 var prayers=[];var editingId=null;var PASS='';
+var CATS=['Family','Friends','Nation','World','Thanksgiving'];
 async function rpc(name,body){
 var r=await fetch(SB_URL+'/rest/v1/rpc/'+name,{method:'POST',headers:HEADERS,body:JSON.stringify(body)});
 if(!r.ok){throw new Error('rpc failed');}
@@ -86,7 +91,7 @@ load();
 }
 async function load(){
 try{
-var r=await fetch(SB_URL+'/rest/v1/prayers?select=*&order=created_at.desc',{headers:HEADERS});
+var r=await fetch(SB_URL+'/rest/v1/prayers?select=*&order=sort_order.desc',{headers:HEADERS});
 prayers=await r.json();
 }catch(e){
 document.getElementById('activeList').innerHTML='<div class="empty">Could not load. Refresh the page.</div>';
@@ -103,7 +108,15 @@ function esc(t){var d=document.createElement('div');d.textContent=t||'';return d
 function metaLine(p){
 var by=p.added_by?esc(p.added_by)+' &middot; ':'';
 var upd=p.edited?' &middot; updated '+fmtDate(p.edited):'';
-return '<div class="meta">'+by+fmtDate(p.created_at)+upd+'<span class="tag">'+esc(p.category)+'</span></div>';
+return '<div class="meta">'+by+fmtDate(p.created_at)+upd+'</div>';
+}
+function cardHtml(p,idx,count){
+if(p.id===editingId){
+return '<div class="prayer">'+metaLine(p)+'<input id="editPoint" value="'+esc(p.name)+'"><textarea id="editArea">'+esc(p.text)+'</textarea><div class="actions"><button class="small-btn answer" onclick="saveEdit(\''+p.id+'\')">Save changes</button><button class="small-btn" onclick="cancelEdit()">Cancel</button></div></div>';
+}
+var up=idx>0?'':'disabled';
+var down=idx<count-1?'':'disabled';
+return '<div class="prayer"><div class="point">'+esc(p.name)+'</div>'+metaLine(p)+'<div class="text">'+esc(p.text)+'</div><div class="actions"><button class="small-btn move" '+up+' onclick="movePrayer(\''+p.id+'\',-1)" title="Move up">&#8593;</button><button class="small-btn move" '+down+' onclick="movePrayer(\''+p.id+'\',1)" title="Move down">&#8595;</button><button class="small-btn answer" onclick="markAnswered(\''+p.id+'\')">Prayer answered</button><button class="small-btn" onclick="startEdit(\''+p.id+'\')">Edit</button><button class="small-btn danger" onclick="removePrayer(\''+p.id+'\')">Remove</button></div></div>';
 }
 function render(){
 var active=prayers.filter(function(p){return !p.answered;});
@@ -111,12 +124,16 @@ var done=prayers.filter(function(p){return p.answered;});
 var al=document.getElementById('activeList');
 if(active.length===0){al.innerHTML='<div class="empty">No active requests.</div>';}
 else{
-al.innerHTML=active.map(function(p){
-if(p.id===editingId){
-return '<div class="prayer">'+metaLine(p)+'<input id="editPoint" value="'+esc(p.name)+'"><textarea id="editArea">'+esc(p.text)+'</textarea><div class="actions"><button class="small-btn answer" onclick="saveEdit(\''+p.id+'\')">Save changes</button><button class="small-btn" onclick="cancelEdit()">Cancel</button></div></div>';
-}
-return '<div class="prayer"><div class="point">'+esc(p.name)+'</div>'+metaLine(p)+'<div class="text">'+esc(p.text)+'</div><div class="actions"><button class="small-btn answer" onclick="markAnswered(\''+p.id+'\')">Prayer answered</button><button class="small-btn" onclick="startEdit(\''+p.id+'\')">Edit</button><button class="small-btn danger" onclick="removePrayer(\''+p.id+'\')">Remove</button></div></div>';
-}).join('');
+var html='';
+CATS.forEach(function(cat){
+var items=active.filter(function(p){return p.category===cat;});
+if(!items.length){return;}
+html+='<h3>'+cat+'</h3>';
+items.forEach(function(p,i){html+=cardHtml(p,i,items.length);});
+});
+var other=active.filter(function(p){return CATS.indexOf(p.category)<0;});
+if(other.length){html+='<h3>Other</h3>';other.forEach(function(p,i){html+=cardHtml(p,i,other.length);});}
+al.innerHTML=html;
 }
 var dl=document.getElementById('answeredList');
 if(done.length===0){dl.innerHTML='<div class="empty">No answered prayers yet.</div>';}
@@ -125,6 +142,16 @@ dl.innerHTML=done.map(function(p){
 return '<div class="prayer answered"><div class="point">&#128591; '+esc(p.name)+'</div>'+metaLine(p)+'<div class="text">'+esc(p.text)+'</div><div class="answered-tag">Answered '+(p.answered_date?fmtDate(p.answered_date):'')+'</div><div class="actions"><button class="small-btn danger" onclick="removePrayer(\''+p.id+'\')">Remove</button></div></div>';
 }).join('');
 }
+}
+async function movePrayer(id,dir){
+var p=prayers.find(function(x){return x.id===id;});
+if(!p){return;}
+var siblings=prayers.filter(function(x){return !x.answered&&x.category===p.category;});
+var idx=siblings.findIndex(function(x){return x.id===id;});
+var other=siblings[idx+dir];
+if(!other){return;}
+try{await rpc('admin_swap_order',{pass:PASS,pid1:id,pid2:other.id});await load();}
+catch(e){setStatus('status','Could not move. Try again.');}
 }
 async function markAnswered(id){
 try{await rpc('admin_answered',{pass:PASS,pid:id});await load();setStatus('status','Moved to Thanksgiving.');}
