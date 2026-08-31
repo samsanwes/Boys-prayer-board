@@ -14,7 +14,7 @@ header p{color:var(--soft);font-size:17px;margin-top:6px;font-style:italic;}
 main{max-width:620px;margin:0 auto;padding:20px 16px;}
 .add-box{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:18px;margin-bottom:26px;}
 .add-box label{display:block;font-size:16px;color:var(--soft);margin-bottom:5px;}
-.add-box input,.add-box textarea,.add-box select{width:100%;font-family:inherit;font-size:19px;padding:12px;border:1px solid var(--line);border-radius:8px;margin-bottom:14px;background:#fbfcfe;color:var(--ink);}
+.add-box input,.add-box textarea,.add-box select{width:100%;box-sizing:border-box;font-family:inherit;font-size:19px;padding:12px;border:1px solid var(--line);border-radius:8px;margin-bottom:14px;background:#fbfcfe;color:var(--ink);}
 .add-box textarea{min-height:80px;resize:vertical;}
 .btn{display:inline-block;font-family:inherit;font-size:19px;padding:13px 26px;border:none;border-radius:8px;background:var(--ink);color:#fff;cursor:pointer;}
 h2{font-size:22px;font-weight:normal;margin:26px 0 12px;padding-bottom:6px;border-bottom:2px solid var(--gold);}
@@ -37,7 +37,7 @@ h2{font-size:22px;font-weight:normal;margin:26px 0 12px;padding-bottom:6px;borde
 <div class="add-box">
 <h2 style="margin-top:0;">Add a prayer request</h2>
 <label for="ppoint">Prayer point (who or what this is for)</label>
-<input type="text" id="ppoint" placeholder="e.g. Sharon's health and safe delivery">
+<input type="text" id="ppoint" placeholder="e.g. John's Health">
 <label for="ptext">Prayer request</label>
 <textarea id="ptext" placeholder="What shall we pray for?"></textarea>
 <label for="pcat">This is for</label>
