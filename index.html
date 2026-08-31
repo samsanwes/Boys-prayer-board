@@ -1,199 +1,193 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Big Family Prayer Board</title>
-  <style>
-    :root{--ink:#2b3348;--soft:#6b7386;--bg:#f2f4f7;--card:#ffffff;--gold:#b8860b;--green:#2e7d4f;--line:#dde2ea;}
-    *{box-sizing:border-box;margin:0;padding:0;}
-    body{font-family:Georgia,'Times New Roman',serif;background:var(--bg);color:var(--ink);font-size:19px;line-height:1.55;padding-bottom:60px;}
-    header{background:var(--card);border-bottom:1px solid var(--line);padding:28px 20px 22px;text-align:center;}
-    header h1{font-size:30px;font-weight:normal;}
-    header p{color:var(--soft);font-size:17px;margin-top:6px;font-style:italic;}
-    main{max-width:620px;margin:0 auto;padding:20px 16px;}
-    .add-box{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:18px;margin-bottom:26px;}
-    .add-box label{display:block;font-size:16px;color:var(--soft);margin-bottom:5px;}
-    .add-box input,.add-box textarea,.add-box select{width:100%;font-family:inherit;font-size:19px;padding:12px;border:1px solid var(--line);border-radius:8px;margin-bottom:14px;background:#fbfcfe;color:var(--ink);}
-    .add-box textarea{min-height:80px;resize:vertical;}
-    .btn{display:inline-block;font-family:inherit;font-size:19px;padding:13px 26px;border:none;border-radius:8px;background:var(--ink);color:#fff;cursor:pointer;}
-    h2{font-size:22px;font-weight:normal;margin:26px 0 12px;padding-bottom:6px;border-bottom:2px solid var(--gold);}
-    .prayer{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:16px 18px;margin-bottom:12px;}
-    .prayer .meta{font-size:15px;color:var(--soft);margin-bottom:6px;}
-    .prayer .text{font-size:19px;}
-    .small-btn{font-family:inherit;font-size:16px;padding:8px 16px;border-radius:8px;border:1px solid var(--line);background:#fbfcfe;color:var(--ink);cursor:pointer;}
-    .answered .text{color:var(--soft);}
-    .answered-tag{color:var(--green);font-size:15px;}
-    .tag{display:inline-block;font-size:14px;padding:2px 10px;border-radius:999px;border:1px solid var(--line);color:var(--soft);margin-left:6px;}
-    .empty{color:var(--soft);font-style:italic;padding:10px 4px;}
-    .status{text-align:center;color:var(--soft);font-size:15px;margin-top:8px;min-height:20px;}
-    .toggle-answered{background:none;border:none;font-family:inherit;font-size:17px;color:var(--soft);cursor:pointer;text-decoration:underline;margin-top:4px;}
-    #mondayView{display:none;position:fixed;inset:0;background:var(--card);overflow-y:auto;z-index:10;padding:24px 18px 80px;}
-    </style>
-  </head>
-  <body>
-    <header>
-      <h1>Big Family Prayer Board</h1>
-    <p>"For where two or three gather in my name, there am I with them."</p>
-    <button class="btn" style="margin-top:14px;" onclick="showMonday()">This Monday's prayer list</button>button>
-    </header>
-  <main>
-    <div class="add-box">
-      <label for="pname">Your name</label>label>
-      <input type="text" id="pname" placeholder="e.g. John Appacha">
-      <label for="ptext">Prayer request</label>label>
-      <textarea id="ptext" placeholder="What shall we pray for?"></textarea>
-      <label for="pcat">This is for</label>label>
-      <select id="pcat"><option>Family</option><option>Friends</option><option>Nation</option><option>World</option><option>Thanksgiving</option></select>select>
-    <button class="btn" onclick="addPrayer()">Add to the board</button>button>
-    <div class="status" id="status"></div>div>
-    </div>div>
-  <h2>Praying for</h2>
-  <div id="activeList"><div class="empty">Loading...</div>div></div>div>
-  <h2>Answered prayers</h2>
-  <button class="toggle-answered" id="toggleBtn" onclick="toggleAnswered()">Show answered prayers</button>button>
-  <div id="answeredList" style="display:none"></div>div>
-  <h2>Backup</h2>
-  <p style="color:var(--soft);font-size:17px;margin-bottom:12px;">Copy the whole board as plain text, then paste it into an email or note to keep it safe.</p>p>
-  <button class="btn" onclick="exportBoard()">Copy board for backup</button>button>
-  <div class="status" id="exportStatus"></div>div>
-  <textarea id="exportText" style="display:none;width:100%;min-height:200px;font-family:inherit;font-size:16px;margin-top:12px;padding:12px;border:1px solid var(--line);border-radius:8px;" readonly></textarea>
-  </main>
-  <div id="mondayView">
-  <div style="max-width:640px;margin:0 auto;">
-  <button class="small-btn" onclick="hideMonday()">Back to board</button>button>
-  <button class="small-btn" style="float:right;" onclick="copyMonday()">Copy list</button>button>
-  <div id="mondayCopyStatus" style="clear:both;text-align:center;color:var(--green);font-size:16px;min-height:20px;"></div>div>
-  <h1 style="font-size:32px;font-weight:normal;margin:20px 0 4px;text-align:center;">Monday Prayer List</h1>
-  <p id="mondayDate" style="text-align:center;color:var(--soft);font-size:18px;margin-bottom:24px;"></p>
-  <div id="mondayList"></div>div>
-  </div>div>
-  </div>div>
-  <script>
-    var SB_URL='https://irujnmfbefjpztovqwjx.supabase.co';
-    var SB_KEY='sb_publishable_31eIEGWomuVnjU2qnjTdDw_DDlS8K-M';
-    var HEADERS={'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY,'Content-Type':'application/json'};
-    var prayers=[];var showAnswered=false;
-    async function api(method,query,body){
-      var opts={method:method,headers:HEADERS};
-      if(body){opts.body=JSON.stringify(body);}
-      var r=await fetch(SB_URL+'/rest/v1/prayers'+query,opts);
-      if(!r.ok){throw new Error('request failed');}
-      return r;
-    }
-    async function load(){
-      try{
-        var r=await api('GET','?select=*&order=created_at.desc');
-        prayers=await r.json();
-      }catch(e){
-        document.getElementById('activeList').innerHTML='<div class="empty">Could not load the board. Please check your internet and refresh.</div>';
-        return;
-      }
-      render();
-    }
-    function setStatus(id,msg){
-      var s=document.getElementById(id);s.textContent=msg;
-      setTimeout(function(){s.textContent='';},5000);
-    }
-    function fmtDate(iso){return new Date(iso).toLocaleDateString(undefined,{day:'numeric',month:'short',year:'numeric'});}
-    function esc(t){var d=document.createElement('div');d.textContent=t||'';return d.innerHTML;}
-    function render(){
-      var active=prayers.filter(function(p){return !p.answered;});
-      var done=prayers.filter(function(p){return p.answered;});
-      var al=document.getElementById('activeList');
-      if(active.length===0){al.innerHTML='<div class="empty">No requests yet. Add the first one above.</div>';}
-      else{
-        al.innerHTML=active.map(function(p){
-          var upd=p.edited?' &middot; updated '+fmtDate(p.edited):'';
-          return '<div class="prayer"><div class="meta">'+esc(p.name)+' &middot; '+fmtDate(p.created_at)+upd+'<span class="tag">'+esc(p.category)+'</span></div><div class="text">'+esc(p.text)+'</div></div>';
-        }).join('');
-      }
-      var dl=document.getElementById('answeredList');
-      if(done.length===0){dl.innerHTML='<div class="empty">Answered prayers will appear here.</div>';}
-      else{
-        dl.innerHTML=done.map(function(p){
-          return '<div class="prayer answered"><div class="meta">'+esc(p.name)+' &middot; '+fmtDate(p.created_at)+'<span class="tag">'+esc(p.category)+'</span></div><div class="text">'+esc(p.text)+'</div><div class="answered-tag">Answered '+(p.answered_date?fmtDate(p.answered_date):'')+' &mdash; praise God!</div></div>';
-        }).join('');
-      }
-    }
-    async function addPrayer(){
-      var name=document.getElementById('pname').value.trim();
-      var text=document.getElementById('ptext').value.trim();
-      var cat=document.getElementById('pcat').value;
-      if(!text){setStatus('status','Please write a prayer request first.');return;}
-      try{
-        await api('POST','',{name:name||'Family member',text:text,category:cat});
-        document.getElementById('ptext').value='';
-        setStatus('status','Added. Everyone with the link can see it.');
-        await load();
-      }catch(e){setStatus('status','Could not save. Please try again.');}
-    }
-    function toggleAnswered(){
-      showAnswered=!showAnswered;
-      document.getElementById('answeredList').style.display=showAnswered?'block':'none';
-      document.getElementById('toggleBtn').textContent=showAnswered?'Hide answered prayers':'Show answered prayers';
-    }
-    function buildMonday(){
-      var active=prayers.filter(function(p){return !p.answered;});
-      var recent=prayers.filter(function(p){return p.answered&&p.answered_date&&(Date.now()-new Date(p.answered_date).getTime())<14*24*60*60*1000;});
-      return {active:active,recent:recent,order:['Thanksgiving','Family','Friends','Nation','World']};
-    }
-    function showMonday(){
-      var b=buildMonday();
-      document.getElementById('mondayDate').textContent=new Date().toLocaleDateString(undefined,{weekday:'long',day:'numeric',month:'long',year:'numeric'});
-      var html='';
-      if(b.recent.length){html+='<h2 style="font-size:24px;">Give thanks &mdash; answered recently</h2>';
-                          b.recent.forEach(function(p){html+='<p style="font-size:22px;line-height:1.6;margin-bottom:16px;">&#128591; '+esc(p.text)+' <span style="color:var(--soft);font-size:17px;">('+esc(p.name)+')</span></p>';});}
-      b.order.forEach(function(cat){
-        var items=b.active.filter(function(p){return p.category===cat;});
-        if(!items.length){return;}
-        html+='<h2 style="font-size:24px;">'+cat+'</h2>';
-        items.forEach(function(p){html+='<p style="font-size:22px;line-height:1.6;margin-bottom:16px;">&bull; '+esc(p.text)+' <span style="color:var(--soft);font-size:17px;">('+esc(p.name)+')</span></p>';});
-      });
-      if(!html){html='<p class="empty">No requests on the board yet.</p>';}
-      document.getElementById('mondayList').innerHTML=html;
-      document.getElementById('mondayView').style.display='block';
-      window.scrollTo(0,0);
-    }
-    function hideMonday(){document.getElementById('mondayView').style.display='none';}
-    function copyMonday(){
-      var b=buildMonday();
-      var dateStr=new Date().toLocaleDateString(undefined,{weekday:'long',day:'numeric',month:'long',year:'numeric'});
-      var out='\uD83D\uDE4F *Monday Prayer List*\n'+dateStr+'\n\n';
-      if(b.recent.length){out+='*Give thanks - answered recently*\n';
-                          b.recent.forEach(function(p){out+='\uD83D\uDE4F '+p.text+' ('+p.name+')\n';});out+='\n';}
-      b.order.forEach(function(cat){
-        var items=b.active.filter(function(p){return p.category===cat;});
-        if(!items.length){return;}
-        out+='*'+cat+'*\n';
-        items.forEach(function(p){out+='- '+p.text+' ('+p.name+')\n';});out+='\n';
-      });
-      if(!b.active.length&&!b.recent.length){out+='No requests on the board yet.\n';}
-      navigator.clipboard.writeText(out).then(function(){setStatus('mondayCopyStatus','Copied! Paste it into WhatsApp or any chat.');})
-      .catch(function(){setStatus('mondayCopyStatus','Could not copy automatically. Use the backup section on the board instead.');});
-    }
-    function exportBoard(){
-      var active=prayers.filter(function(p){return !p.answered;});
-      var done=prayers.filter(function(p){return p.answered;});
-      var out='BIG FAMILY PRAYER BOARD - backup made '+new Date().toLocaleDateString()+'\n\n=== PRAYING FOR ('+active.length+') ===\n\n';
-      active.forEach(function(p){out+='- '+p.text+'\n  ('+p.name+', '+fmtDate(p.created_at)+', '+p.category+')\n\n';});
-      if(!active.length){out+='(none)\n\n';}
-      out+='=== ANSWERED PRAYERS ('+done.length+') ===\n\n';
-      done.forEach(function(p){out+='- '+p.text+'\n  ('+p.name+', asked '+fmtDate(p.created_at)+(p.answered_date?', answered '+fmtDate(p.answered_date):'')+', '+p.category+')\n\n';});
-      if(!done.length){out+='(none)\n';}
-      var ta=document.getElementById('exportText');
-      ta.value=out;
-      navigator.clipboard.writeText(out).then(function(){setStatus('exportStatus','Copied! Paste it into an email or note. The text is also shown below.');ta.style.display='block';})
-      .catch(function(){setStatus('exportStatus','Select and copy the text below to save it.');ta.style.display='block';ta.select();});
-    }
-    load();
-    setInterval(load,30000);
-  </script>
-  </body>
-</html>html>
-  </script></h2></h2></option></option>
-  </main></p></h1>
-    </header>
-  </body>
-  </style></title>
-  </head>
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Big Family Prayer Board</title>
+<style>
+:root{--ink:#2b3348;--soft:#6b7386;--bg:#f2f4f7;--card:#ffffff;--gold:#b8860b;--green:#2e7d4f;--line:#dde2ea;}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:Georgia,'Times New Roman',serif;background:var(--bg);color:var(--ink);font-size:19px;line-height:1.55;padding-bottom:60px;}
+header{background:var(--card);border-bottom:1px solid var(--line);padding:28px 20px 22px;text-align:center;}
+header h1{font-size:30px;font-weight:normal;}
+header p{color:var(--soft);font-size:17px;margin-top:6px;font-style:italic;}
+main{max-width:620px;margin:0 auto;padding:20px 16px;}
+.add-box{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:18px;margin-bottom:26px;}
+.add-box label{display:block;font-size:16px;color:var(--soft);margin-bottom:5px;}
+.add-box input,.add-box textarea,.add-box select{width:100%;font-family:inherit;font-size:19px;padding:12px;border:1px solid var(--line);border-radius:8px;margin-bottom:14px;background:#fbfcfe;color:var(--ink);}
+.add-box textarea{min-height:80px;resize:vertical;}
+.btn{display:inline-block;font-family:inherit;font-size:19px;padding:13px 26px;border:none;border-radius:8px;background:var(--ink);color:#fff;cursor:pointer;}
+h2{font-size:22px;font-weight:normal;margin:26px 0 12px;padding-bottom:6px;border-bottom:2px solid var(--gold);}
+.prayer{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:16px 18px;margin-bottom:12px;}
+.prayer .meta{font-size:15px;color:var(--soft);margin-bottom:6px;}
+.prayer .text{font-size:19px;}
+.small-btn{font-family:inherit;font-size:16px;padding:8px 16px;border-radius:8px;border:1px solid var(--line);background:#fbfcfe;color:var(--ink);cursor:pointer;}
+.answered .text{color:var(--soft);}
+.answered-tag{color:var(--green);font-size:15px;}
+.tag{display:inline-block;font-size:14px;padding:2px 10px;border-radius:999px;border:1px solid var(--line);color:var(--soft);margin-left:6px;}
+.empty{color:var(--soft);font-style:italic;padding:10px 4px;}
+.status{text-align:center;color:var(--soft);font-size:15px;margin-top:8px;min-height:20px;}
+.toggle-answered{background:none;border:none;font-family:inherit;font-size:17px;color:var(--soft);cursor:pointer;text-decoration:underline;margin-top:4px;}
+#mondayView{display:none;position:fixed;inset:0;background:var(--card);overflow-y:auto;z-index:10;padding:24px 18px 80px;}
+</style>
+</head>
+<body>
+<header>
+<h1>Big Family Prayer Board</h1>
+<p>"For where two or three gather in my name, there am I with them."</p>
+<button class="btn" style="margin-top:14px;" onclick="showMonday()">This Monday's prayer list</button>
+</header>
+<main>
+<div class="add-box">
+<label for="pname">Your name</label>
+<input type="text" id="pname" placeholder="e.g. John Appacha">
+<label for="ptext">Prayer request</label>
+<textarea id="ptext" placeholder="What shall we pray for?"></textarea>
+<label for="pcat">This is for</label>
+<select id="pcat"><option>Family</option><option>Friends</option><option>Nation</option><option>World</option><option>Thanksgiving</option></select>
+<button class="btn" onclick="addPrayer()">Add to the board</button>
+<div class="status" id="status"></div>
+</div>
+<h2>Praying for</h2>
+<div id="activeList"><div class="empty">Loading...</div></div>
+<h2>Answered prayers</h2>
+<button class="toggle-answered" id="toggleBtn" onclick="toggleAnswered()">Show answered prayers</button>
+<div id="answeredList" style="display:none"></div>
+<h2>Backup</h2>
+<p style="color:var(--soft);font-size:17px;margin-bottom:12px;">Copy the whole board as plain text, then paste it into an email or note to keep it safe.</p>
+<button class="btn" onclick="exportBoard()">Copy board for backup</button>
+<div class="status" id="exportStatus"></div>
+<textarea id="exportText" style="display:none;width:100%;min-height:200px;font-family:inherit;font-size:16px;margin-top:12px;padding:12px;border:1px solid var(--line);border-radius:8px;" readonly></textarea>
+</main>
+<div id="mondayView">
+<div style="max-width:640px;margin:0 auto;">
+<button class="small-btn" onclick="hideMonday()">Back to board</button>
+<button class="small-btn" style="float:right;" onclick="copyMonday()">Copy list</button>
+<div id="mondayCopyStatus" style="clear:both;text-align:center;color:var(--green);font-size:16px;min-height:20px;"></div>
+<h1 style="font-size:32px;font-weight:normal;margin:20px 0 4px;text-align:center;">Monday Prayer List</h1>
+<p id="mondayDate" style="text-align:center;color:var(--soft);font-size:18px;margin-bottom:24px;"></p>
+<div id="mondayList"></div>
+</div>
+</div>
+<script>
+var SB_URL='https://irujnmfbefjpztovqwjx.supabase.co';
+var SB_KEY='sb_publishable_31eIEGWomuVnjU2qnjTdDw_DDlS8K-M';
+var HEADERS={'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY,'Content-Type':'application/json'};
+var prayers=[];var showAnswered=false;
+async function api(method,query,body){
+var opts={method:method,headers:HEADERS};
+if(body){opts.body=JSON.stringify(body);}
+var r=await fetch(SB_URL+'/rest/v1/prayers'+query,opts);
+if(!r.ok){throw new Error('request failed');}
+return r;
+}
+async function load(){
+try{
+var r=await api('GET','?select=*&order=created_at.desc');
+prayers=await r.json();
+}catch(e){
+document.getElementById('activeList').innerHTML='<div class="empty">Could not load the board. Please check your internet and refresh.</div>';
+return;
+}
+render();
+}
+function setStatus(id,msg){
+var s=document.getElementById(id);s.textContent=msg;
+setTimeout(function(){s.textContent='';},5000);
+}
+function fmtDate(iso){return new Date(iso).toLocaleDateString(undefined,{day:'numeric',month:'short',year:'numeric'});}
+function esc(t){var d=document.createElement('div');d.textContent=t||'';return d.innerHTML;}
+function render(){
+var active=prayers.filter(function(p){return !p.answered;});
+var done=prayers.filter(function(p){return p.answered;});
+var al=document.getElementById('activeList');
+if(active.length===0){al.innerHTML='<div class="empty">No requests yet. Add the first one above.</div>';}
+else{
+al.innerHTML=active.map(function(p){
+var upd=p.edited?' &middot; updated '+fmtDate(p.edited):'';
+return '<div class="prayer"><div class="meta">'+esc(p.name)+' &middot; '+fmtDate(p.created_at)+upd+'<span class="tag">'+esc(p.category)+'</span></div><div class="text">'+esc(p.text)+'</div></div>';
+}).join('');
+}
+var dl=document.getElementById('answeredList');
+if(done.length===0){dl.innerHTML='<div class="empty">Answered prayers will appear here.</div>';}
+else{
+dl.innerHTML=done.map(function(p){
+return '<div class="prayer answered"><div class="meta">'+esc(p.name)+' &middot; '+fmtDate(p.created_at)+'<span class="tag">'+esc(p.category)+'</span></div><div class="text">'+esc(p.text)+'</div><div class="answered-tag">Answered '+(p.answered_date?fmtDate(p.answered_date):'')+' &mdash; praise God!</div></div>';
+}).join('');
+}
+}
+async function addPrayer(){
+var name=document.getElementById('pname').value.trim();
+var text=document.getElementById('ptext').value.trim();
+var cat=document.getElementById('pcat').value;
+if(!text){setStatus('status','Please write a prayer request first.');return;}
+try{
+await api('POST','',{name:name||'Family member',text:text,category:cat});
+document.getElementById('ptext').value='';
+setStatus('status','Added. Everyone with the link can see it.');
+await load();
+}catch(e){setStatus('status','Could not save. Please try again.');}
+}
+function toggleAnswered(){
+showAnswered=!showAnswered;
+document.getElementById('answeredList').style.display=showAnswered?'block':'none';
+document.getElementById('toggleBtn').textContent=showAnswered?'Hide answered prayers':'Show answered prayers';
+}
+function buildMonday(){
+var active=prayers.filter(function(p){return !p.answered;});
+var recent=prayers.filter(function(p){return p.answered&&p.answered_date&&(Date.now()-new Date(p.answered_date).getTime())<14*24*60*60*1000;});
+return {active:active,recent:recent,order:['Thanksgiving','Family','Friends','Nation','World']};
+}
+function showMonday(){
+var b=buildMonday();
+document.getElementById('mondayDate').textContent=new Date().toLocaleDateString(undefined,{weekday:'long',day:'numeric',month:'long',year:'numeric'});
+var html='';
+if(b.recent.length){html+='<h2 style="font-size:24px;">Give thanks &mdash; answered recently</h2>';
+b.recent.forEach(function(p){html+='<p style="font-size:22px;line-height:1.6;margin-bottom:16px;">&#128591; '+esc(p.text)+' <span style="color:var(--soft);font-size:17px;">('+esc(p.name)+')</span></p>';});}
+b.order.forEach(function(cat){
+var items=b.active.filter(function(p){return p.category===cat;});
+if(!items.length){return;}
+html+='<h2 style="font-size:24px;">'+cat+'</h2>';
+items.forEach(function(p){html+='<p style="font-size:22px;line-height:1.6;margin-bottom:16px;">&bull; '+esc(p.text)+' <span style="color:var(--soft);font-size:17px;">('+esc(p.name)+')</span></p>';});
+});
+if(!html){html='<p class="empty">No requests on the board yet.</p>';}
+document.getElementById('mondayList').innerHTML=html;
+document.getElementById('mondayView').style.display='block';
+window.scrollTo(0,0);
+}
+function hideMonday(){document.getElementById('mondayView').style.display='none';}
+function copyMonday(){
+var b=buildMonday();
+var dateStr=new Date().toLocaleDateString(undefined,{weekday:'long',day:'numeric',month:'long',year:'numeric'});
+var out='\uD83D\uDE4F *Monday Prayer List*\n'+dateStr+'\n\n';
+if(b.recent.length){out+='*Give thanks - answered recently*\n';
+b.recent.forEach(function(p){out+='\uD83D\uDE4F '+p.text+' ('+p.name+')\n';});out+='\n';}
+b.order.forEach(function(cat){
+var items=b.active.filter(function(p){return p.category===cat;});
+if(!items.length){return;}
+out+='*'+cat+'*\n';
+items.forEach(function(p){out+='- '+p.text+' ('+p.name+')\n';});out+='\n';
+});
+if(!b.active.length&&!b.recent.length){out+='No requests on the board yet.\n';}
+navigator.clipboard.writeText(out).then(function(){setStatus('mondayCopyStatus','Copied! Paste it into WhatsApp or any chat.');})
+.catch(function(){setStatus('mondayCopyStatus','Could not copy automatically. Use the backup section on the board instead.');});
+}
+function exportBoard(){
+var active=prayers.filter(function(p){return !p.answered;});
+var done=prayers.filter(function(p){return p.answered;});
+var out='BIG FAMILY PRAYER BOARD - backup made '+new Date().toLocaleDateString()+'\n\n=== PRAYING FOR ('+active.length+') ===\n\n';
+active.forEach(function(p){out+='- '+p.text+'\n  ('+p.name+', '+fmtDate(p.created_at)+', '+p.category+')\n\n';});
+if(!active.length){out+='(none)\n\n';}
+out+='=== ANSWERED PRAYERS ('+done.length+') ===\n\n';
+done.forEach(function(p){out+='- '+p.text+'\n  ('+p.name+', asked '+fmtDate(p.created_at)+(p.answered_date?', answered '+fmtDate(p.answered_date):'')+', '+p.category+')\n\n';});
+if(!done.length){out+='(none)\n';}
+var ta=document.getElementById('exportText');
+ta.value=out;
+navigator.clipboard.writeText(out).then(function(){setStatus('exportStatus','Copied! Paste it into an email or note. The text is also shown below.');ta.style.display='block';})
+.catch(function(){setStatus('exportStatus','Select and copy the text below to save it.');ta.style.display='block';ta.select();});
+}
+load();
+setInterval(load,30000);
+</script>
+</body>
+</html>
