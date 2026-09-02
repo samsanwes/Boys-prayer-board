@@ -42,7 +42,7 @@ h2{font-size:22px;font-weight:normal;margin:26px 0 12px;padding-bottom:6px;borde
 <textarea id="ptext" placeholder="What shall we pray for?"></textarea>
 <label for="pcat">This is for</label>
 <select id="pcat"><option>Personal</option><option>Family</option><option>Friends</option><option>Nation</option><option>World</option><option>Thanksgiving</option></select>
-<label for="pby">Your name (optional)</label>
+<label for="pby">Your name</label>
 <input type="text" id="pby" placeholder="e.g. John">
 <button class="btn" onclick="addPrayer()">Add to the board</button>
 <div class="status" id="status"></div>
@@ -88,8 +88,9 @@ var cat=document.getElementById('pcat').value;
 var by=document.getElementById('pby').value.trim();
 if(!point){setStatus('status','Please write the prayer point first.');return;}
 if(!text){setStatus('status','Please write the prayer request.');return;}
+if(!by){setStatus('status','Please add your name.');return;}
 try{
-await api('POST','',{name:point,text:text,category:cat,added_by:by||null});
+await api('POST','',{name:point,text:text,category:cat,added_by:by});
 document.getElementById('ppoint').value='';
 document.getElementById('ptext').value='';
 document.getElementById('pby').value='';
