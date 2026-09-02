@@ -81,6 +81,7 @@ setTimeout(function(){s.textContent='';},5000);
 }
 function fmtDate(iso){return new Date(iso).toLocaleDateString(undefined,{day:'numeric',month:'short',year:'numeric'});}
 function esc(t){var d=document.createElement('div');d.textContent=t||'';return d.innerHTML;}
+function linkify(h){return h.replace(/(https?:\/\/[^\s<]+|www\.[^\s<]+)/g,function(u){var t='';var m=u.match(/[.,;:!?)]+$/);if(m){t=m[0];u=u.slice(0,-t.length);}var href=u.indexOf('http')===0?u:'https://'+u;return '<a href="'+href+'" target="_blank" rel="noopener" style="color:var(--gold);word-break:break-all;">'+u+'</a>'+t;});}
 async function addPrayer(){
 var point=document.getElementById('ppoint').value.trim();
 var text=document.getElementById('ptext').value.trim();
@@ -107,7 +108,7 @@ function entryHtml(p,answered){
 var by=p.added_by?'<div class="mby">Added by '+esc(p.added_by)+'</div>':'<div class="mby"></div>';
 var mark=answered?'&#128591; ':'';
 var ans=answered&&p.answered_date?' <span style="color:var(--green);font-size:16px;font-weight:normal;">(answered '+fmtDate(p.answered_date)+')</span>':'';
-return '<div class="mpoint">'+mark+esc(p.name)+ans+'</div><div class="mdetail">'+esc(p.text)+'</div>'+by;
+return '<div class="mpoint">'+mark+esc(p.name)+ans+'</div><div class="mdetail">'+linkify(esc(p.text))+'</div>'+by;
 }
 async function showWeek(){
 document.getElementById('weekView').style.display='block';

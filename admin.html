@@ -105,6 +105,7 @@ setTimeout(function(){s.textContent='';},5000);
 }
 function fmtDate(iso){return new Date(iso).toLocaleDateString(undefined,{day:'numeric',month:'short',year:'numeric'});}
 function esc(t){var d=document.createElement('div');d.textContent=t||'';return d.innerHTML;}
+function linkify(h){return h.replace(/(https?:\/\/[^\s<]+|www\.[^\s<]+)/g,function(u){var t='';var m=u.match(/[.,;:!?)]+$/);if(m){t=m[0];u=u.slice(0,-t.length);}var href=u.indexOf('http')===0?u:'https://'+u;return '<a href="'+href+'" target="_blank" rel="noopener" style="color:var(--gold);word-break:break-all;">'+u+'</a>'+t;});}
 function metaLine(p){
 var by=p.added_by?esc(p.added_by)+' &middot; ':'';
 var upd=p.edited?' &middot; updated '+fmtDate(p.edited):'';
@@ -116,7 +117,7 @@ return '<div class="prayer">'+metaLine(p)+'<input id="editPoint" value="'+esc(p.
 }
 var up=idx>0?'':'disabled';
 var down=idx<count-1?'':'disabled';
-return '<div class="prayer"><div class="point">'+esc(p.name)+'</div>'+metaLine(p)+'<div class="text">'+esc(p.text)+'</div><div class="actions"><button class="small-btn move" '+up+' onclick="movePrayer(\''+p.id+'\',-1)" title="Move up">&#8593;</button><button class="small-btn move" '+down+' onclick="movePrayer(\''+p.id+'\',1)" title="Move down">&#8595;</button><button class="small-btn answer" onclick="markAnswered(\''+p.id+'\')">Prayer answered</button><button class="small-btn" onclick="startEdit(\''+p.id+'\')">Edit</button><button class="small-btn danger" onclick="removePrayer(\''+p.id+'\')">Remove</button></div></div>';
+return '<div class="prayer"><div class="point">'+esc(p.name)+'</div>'+metaLine(p)+'<div class="text">'+linkify(esc(p.text))+'</div><div class="actions"><button class="small-btn move" '+up+' onclick="movePrayer(\''+p.id+'\',-1)" title="Move up">&#8593;</button><button class="small-btn move" '+down+' onclick="movePrayer(\''+p.id+'\',1)" title="Move down">&#8595;</button><button class="small-btn answer" onclick="markAnswered(\''+p.id+'\')">Prayer answered</button><button class="small-btn" onclick="startEdit(\''+p.id+'\')">Edit</button><button class="small-btn danger" onclick="removePrayer(\''+p.id+'\')">Remove</button></div></div>';
 }
 function render(){
 var active=prayers.filter(function(p){return !p.answered;});
@@ -139,7 +140,7 @@ var dl=document.getElementById('answeredList');
 if(done.length===0){dl.innerHTML='<div class="empty">No answered prayers yet.</div>';}
 else{
 dl.innerHTML=done.map(function(p){
-return '<div class="prayer answered"><div class="point">&#128591; '+esc(p.name)+'</div>'+metaLine(p)+'<div class="text">'+esc(p.text)+'</div><div class="answered-tag">Answered '+(p.answered_date?fmtDate(p.answered_date):'')+'</div><div class="actions"><button class="small-btn danger" onclick="removePrayer(\''+p.id+'\')">Remove</button></div></div>';
+return '<div class="prayer answered"><div class="point">&#128591; '+esc(p.name)+'</div>'+metaLine(p)+'<div class="text">'+linkify(esc(p.text))+'</div><div class="answered-tag">Answered '+(p.answered_date?fmtDate(p.answered_date):'')+'</div><div class="actions"><button class="small-btn danger" onclick="removePrayer(\''+p.id+'\')">Remove</button></div></div>';
 }).join('');
 }
 }
