@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Big Family Prayer Board</title>
+<title>Boys Prayer Board</title>
 <style>
 :root{--ink:#2b3348;--soft:#6b7386;--bg:#f2f4f7;--card:#ffffff;--gold:#b8860b;--green:#2e7d4f;--line:#dde2ea;}
 *{box-sizing:border-box;margin:0;padding:0;}
@@ -21,7 +21,7 @@ h2{font-size:22px;font-weight:normal;margin:26px 0 12px;padding-bottom:6px;borde
 .small-btn{font-family:inherit;font-size:16px;padding:8px 16px;border-radius:8px;border:1px solid var(--line);background:#fbfcfe;color:var(--ink);cursor:pointer;}
 .empty{color:var(--soft);font-style:italic;padding:10px 4px;}
 .status{text-align:center;color:var(--soft);font-size:15px;margin-top:8px;min-height:20px;}
-#mondayView{display:none;position:fixed;inset:0;background:var(--card);overflow-y:auto;z-index:10;padding:24px 18px 80px;}
+#weekView{display:none;position:fixed;inset:0;background:var(--card);overflow-y:auto;z-index:10;padding:24px 18px 80px;}
 .mpoint{font-size:22px;line-height:1.4;margin-bottom:2px;font-weight:bold;}
 .mdetail{font-size:19px;color:var(--ink);margin-bottom:4px;}
 .mby{font-size:15px;color:var(--soft);margin-bottom:18px;}
@@ -29,9 +29,10 @@ h2{font-size:22px;font-weight:normal;margin:26px 0 12px;padding-bottom:6px;borde
 </head>
 <body>
 <header>
-<h1>Big Family Prayer Board</h1>
-<p>"For where two or three gather in my name, there am I with them."</p>
-<button class="btn" style="margin-top:14px;" onclick="showMonday()">This Monday's prayer list</button>
+<h1>Boys Prayer Board</h1>
+<p style="font-style:normal;margin-top:2px;">Wednesday Bible Study</p>
+<p>"They devoted themselves to the apostles' teaching and to fellowship, to the breaking of bread and to prayer." (Acts 2:42)</p>
+<button class="btn" style="margin-top:14px;" onclick="showWeek()">This week's prayer list</button>
 </header>
 <main>
 <div class="add-box">
@@ -43,20 +44,20 @@ h2{font-size:22px;font-weight:normal;margin:26px 0 12px;padding-bottom:6px;borde
 <label for="pcat">This is for</label>
 <select id="pcat"><option>Family</option><option>Friends</option><option>Nation</option><option>World</option><option>Thanksgiving</option></select>
 <label for="pby">Your name (optional)</label>
-<input type="text" id="pby" placeholder="e.g. John Appacha">
+<input type="text" id="pby" placeholder="e.g. John">
 <button class="btn" onclick="addPrayer()">Add to the board</button>
 <div class="status" id="status"></div>
 </div>
-<p style="color:var(--soft);font-size:17px;text-align:center;">All requests appear in <a href="#" onclick="showMonday();return false;" style="color:var(--ink);">this Monday's prayer list</a>.</p>
+<p style="color:var(--soft);font-size:17px;text-align:center;">All requests appear in <a href="#" onclick="showWeek();return false;" style="color:var(--ink);">this week's prayer list</a>.</p>
 </main>
-<div id="mondayView">
+<div id="weekView">
 <div style="max-width:640px;margin:0 auto;">
-<button class="small-btn" onclick="hideMonday()">Back to board</button>
-<button class="small-btn" style="float:right;" onclick="copyMonday()">Copy list</button>
-<div id="mondayCopyStatus" style="clear:both;text-align:center;color:var(--green);font-size:16px;min-height:20px;"></div>
-<h1 style="font-size:32px;font-weight:normal;margin:20px 0 4px;text-align:center;">Monday Prayer List</h1>
-<p id="mondayDate" style="text-align:center;color:var(--soft);font-size:18px;margin-bottom:24px;"></p>
-<div id="mondayList"><div class="empty">Loading...</div></div>
+<button class="small-btn" onclick="hideWeek()">Back to board</button>
+<button class="small-btn" style="float:right;" onclick="copyWeek()">Copy list</button>
+<div id="weekCopyStatus" style="clear:both;text-align:center;color:var(--green);font-size:16px;min-height:20px;"></div>
+<h1 style="font-size:32px;font-weight:normal;margin:20px 0 4px;text-align:center;">This Week's Prayer List</h1>
+<p id="weekDate" style="text-align:center;color:var(--soft);font-size:18px;margin-bottom:24px;"></p>
+<div id="weekList"><div class="empty">Loading...</div></div>
 </div>
 </div>
 <script>
@@ -67,7 +68,7 @@ var prayers=[];
 async function api(method,query,body){
 var opts={method:method,headers:HEADERS};
 if(body){opts.body=JSON.stringify(body);}
-var r=await fetch(SB_URL+'/rest/v1/prayers'+query,opts);
+var r=await fetch(SB_URL+'/rest/v1/prayers_ws'+query,opts);
 if(!r.ok){throw new Error('request failed');}
 return r;
 }
@@ -93,10 +94,10 @@ await api('POST','',{name:point,text:text,category:cat,added_by:by||null});
 document.getElementById('ppoint').value='';
 document.getElementById('ptext').value='';
 document.getElementById('pby').value='';
-setStatus('status','Added to the board. It will appear in the Monday prayer list.');
+setStatus('status','Added to the board. It will appear in this week's prayer list.');
 }catch(e){setStatus('status','Could not save. Please try again.');}
 }
-function buildMonday(){
+function buildWeek(){
 var active=prayers.filter(function(p){return !p.answered;});
 var thanks=prayers.filter(function(p){return p.answered;}).concat(active.filter(function(p){return p.category==='Thanksgiving';}));
 var seen={};thanks=thanks.filter(function(p){if(seen[p.id]){return false;}seen[p.id]=true;return true;});
@@ -108,12 +109,12 @@ var mark=answered?'&#128591; ':'';
 var ans=answered&&p.answered_date?' <span style="color:var(--green);font-size:16px;font-weight:normal;">(answered '+fmtDate(p.answered_date)+')</span>':'';
 return '<div class="mpoint">'+mark+esc(p.name)+ans+'</div><div class="mdetail">'+esc(p.text)+'</div>'+by;
 }
-async function showMonday(){
-document.getElementById('mondayView').style.display='block';
+async function showWeek(){
+document.getElementById('weekView').style.display='block';
 window.scrollTo(0,0);
-document.getElementById('mondayDate').textContent=new Date().toLocaleDateString(undefined,{weekday:'long',day:'numeric',month:'long',year:'numeric'});
-try{await load();}catch(e){document.getElementById('mondayList').innerHTML='<div class="empty">Could not load the list. Check your internet and try again.</div>';return;}
-var b=buildMonday();
+document.getElementById('weekDate').textContent=new Date().toLocaleDateString(undefined,{weekday:'long',day:'numeric',month:'long',year:'numeric'});
+try{await load();}catch(e){document.getElementById('weekList').innerHTML='<div class="empty">Could not load the list. Check your internet and try again.</div>';return;}
+var b=buildWeek();
 var html='';
 if(b.thanks.length){html+='<h2>Thanksgiving</h2>';
 b.thanks.forEach(function(p){html+=entryHtml(p,p.answered);});}
@@ -124,13 +125,13 @@ html+='<h2>'+cat+'</h2>';
 items.forEach(function(p){html+=entryHtml(p,false);});
 });
 if(!html){html='<p class="empty">No requests on the board yet.</p>';}
-document.getElementById('mondayList').innerHTML=html;
+document.getElementById('weekList').innerHTML=html;
 }
-function hideMonday(){document.getElementById('mondayView').style.display='none';}
-function copyMonday(){
-var b=buildMonday();
+function hideWeek(){document.getElementById('weekView').style.display='none';}
+function copyWeek(){
+var b=buildWeek();
 var dateStr=new Date().toLocaleDateString(undefined,{weekday:'long',day:'numeric',month:'long',year:'numeric'});
-var out='\uD83D\uDE4F *Monday Prayer List*\n'+dateStr+'\n\n';
+var out='\uD83D\uDE4F *Boys Prayer Board - This Week\'s Prayer List*\n'+dateStr+'\n\n';
 if(b.thanks.length){out+='*Thanksgiving*\n';
 b.thanks.forEach(function(p){out+='\uD83D\uDE4F *'+p.name+'*\n'+p.text+'\n\n';});}
 b.order.forEach(function(cat){
@@ -140,8 +141,8 @@ out+='*'+cat+'*\n';
 items.forEach(function(p){out+='- *'+p.name+'*\n'+p.text+'\n\n';});
 });
 if(!b.thanks.length&&!b.active.length){out+='No requests on the board yet.\n';}
-navigator.clipboard.writeText(out).then(function(){setStatus('mondayCopyStatus','Copied! Paste it into WhatsApp or any chat.');})
-.catch(function(){setStatus('mondayCopyStatus','Could not copy automatically. Please screenshot the list instead.');});
+navigator.clipboard.writeText(out).then(function(){setStatus('weekCopyStatus','Copied! Paste it into WhatsApp or any chat.');})
+.catch(function(){setStatus('weekCopyStatus','Could not copy automatically. Please screenshot the list instead.');});
 }
 </script>
 </body>

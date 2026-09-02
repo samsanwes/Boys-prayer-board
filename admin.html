@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Keeper Admin - Big Family Prayer Board</title>
+<title>Keeper Admin - Boys Prayer Board</title>
 <meta name="robots" content="noindex">
 <style>
 :root{--ink:#2b3348;--soft:#6b7386;--bg:#f2f4f7;--card:#ffffff;--gold:#b8860b;--green:#2e7d4f;--red:#a33;--line:#dde2ea;}
@@ -38,7 +38,7 @@ h3{font-size:19px;font-weight:normal;color:var(--soft);margin:18px 0 10px;}
 <body>
 <header>
 <h1>Keeper Admin</h1>
-<p>Big Family Prayer Board - manage requests</p>
+<p>Boys Prayer Board - manage requests</p>
 </header>
 <main>
 <div class="box" id="loginBox">
@@ -50,7 +50,7 @@ h3{font-size:19px;font-weight:normal;color:var(--soft);margin:18px 0 10px;}
 <div id="adminArea" style="display:none">
 <div class="status" id="status"></div>
 <h2>Praying for</h2>
-<p style="color:var(--soft);font-size:16px;">Use the arrows to change the reading order within each category. The Monday list follows this order.</p>
+<p style="color:var(--soft);font-size:16px;">Use the arrows to change the reading order within each category. The weekly list follows this order.</p>
 <div id="activeList"><div class="empty">Loading...</div></div>
 <h2>Thanksgiving (answered)</h2>
 <div id="answeredList"></div>
@@ -77,13 +77,13 @@ async function login(){
 var p=document.getElementById('passInput').value;
 if(!p){return;}
 try{
-var r=await rpc('admin_check',{pass:p});
+var r=await rpc('admin_check_ws',{pass:p});
 var ok=await r.json();
-if(ok===true){PASS=p;sessionStorage.setItem('keeperPass',p);showAdmin();}
+if(ok===true){PASS=p;sessionStorage.setItem('keeperPassWs',p);showAdmin();}
 else{setStatus('loginStatus','Incorrect passcode.');}
 }catch(e){setStatus('loginStatus','Could not check the passcode. Try again.');}
 }
-function logout(){PASS='';sessionStorage.removeItem('keeperPass');location.reload();}
+function logout(){PASS='';sessionStorage.removeItem('keeperPassWs');location.reload();}
 function showAdmin(){
 document.getElementById('loginBox').style.display='none';
 document.getElementById('adminArea').style.display='block';
@@ -91,7 +91,7 @@ load();
 }
 async function load(){
 try{
-var r=await fetch(SB_URL+'/rest/v1/prayers?select=*&order=sort_order.desc',{headers:HEADERS});
+var r=await fetch(SB_URL+'/rest/v1/prayers_ws?select=*&order=sort_order.desc',{headers:HEADERS});
 prayers=await r.json();
 }catch(e){
 document.getElementById('activeList').innerHTML='<div class="empty">Could not load. Refresh the page.</div>';
@@ -150,11 +150,11 @@ var siblings=prayers.filter(function(x){return !x.answered&&x.category===p.categ
 var idx=siblings.findIndex(function(x){return x.id===id;});
 var other=siblings[idx+dir];
 if(!other){return;}
-try{await rpc('admin_swap_order',{pass:PASS,pid1:id,pid2:other.id});await load();}
+try{await rpc('admin_swap_order_ws',{pass:PASS,pid1:id,pid2:other.id});await load();}
 catch(e){setStatus('status','Could not move. Try again.');}
 }
 async function markAnswered(id){
-try{await rpc('admin_answered',{pass:PASS,pid:id});await load();setStatus('status','Moved to Thanksgiving.');}
+try{await rpc('admin_answered_ws',{pass:PASS,pid:id});await load();setStatus('status','Moved to Thanksgiving.');}
 catch(e){setStatus('status','Could not update. Check the passcode or try again.');}
 }
 function startEdit(id){editingId=id;render();var t=document.getElementById('editPoint');if(t){t.focus();}}
@@ -165,18 +165,18 @@ var t=document.getElementById('editArea');
 var np=pt?pt.value.trim():'';
 var v=t?t.value.trim():'';
 if(!np||!v){return;}
-try{await rpc('admin_edit2',{pass:PASS,pid:id,newpoint:np,newtext:v});editingId=null;await load();setStatus('status','Saved.');}
+try{await rpc('admin_edit2_ws',{pass:PASS,pid:id,newpoint:np,newtext:v});editingId=null;await load();setStatus('status','Saved.');}
 catch(e){setStatus('status','Could not save the edit. Try again.');}
 }
 async function removePrayer(id){
 if(!confirm('Remove this point permanently?')){return;}
-try{await rpc('admin_delete',{pass:PASS,pid:id});await load();setStatus('status','Removed.');}
+try{await rpc('admin_delete_ws',{pass:PASS,pid:id});await load();setStatus('status','Removed.');}
 catch(e){setStatus('status','Could not remove. Try again.');}
 }
 function exportBoard(){
 var active=prayers.filter(function(p){return !p.answered;});
 var done=prayers.filter(function(p){return p.answered;});
-var out='BIG FAMILY PRAYER BOARD - backup made '+new Date().toLocaleDateString()+'\n\n=== PRAYING FOR ('+active.length+') ===\n\n';
+var out='BOYS PRAYER BOARD - backup made '+new Date().toLocaleDateString()+'\n\n=== PRAYING FOR ('+active.length+') ===\n\n';
 active.forEach(function(p){out+='* '+p.name+'\n  '+p.text+'\n  ('+(p.added_by?p.added_by+', ':'')+fmtDate(p.created_at)+', '+p.category+')\n\n';});
 if(!active.length){out+='(none)\n\n';}
 out+='=== THANKSGIVING / ANSWERED ('+done.length+') ===\n\n';
@@ -187,8 +187,8 @@ ta.value=out;
 navigator.clipboard.writeText(out).then(function(){setStatus('exportStatus','Copied! Paste it into an email or note. The text is also shown below.');ta.style.display='block';})
 .catch(function(){setStatus('exportStatus','Select and copy the text below to save it.');ta.style.display='block';ta.select();});
 }
-var saved=sessionStorage.getItem('keeperPass');
-if(saved){PASS=saved;rpc('admin_check',{pass:saved}).then(function(r){return r.json();}).then(function(ok){if(ok===true){showAdmin();}else{sessionStorage.removeItem('keeperPass');}}).catch(function(){});}
+var saved=sessionStorage.getItem('keeperPassWs');
+if(saved){PASS=saved;rpc('admin_check_ws',{pass:saved}).then(function(r){return r.json();}).then(function(ok){if(ok===true){showAdmin();}else{sessionStorage.removeItem('keeperPassWs');}}).catch(function(){});}
 document.getElementById('passInput').addEventListener('keydown',function(e){if(e.key==='Enter'){login();}});
 </script>
 </body>
