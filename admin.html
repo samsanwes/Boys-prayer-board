@@ -67,7 +67,7 @@ var SB_URL='https://irujnmfbefjpztovqwjx.supabase.co';
 var SB_KEY='sb_publishable_31eIEGWomuVnjU2qnjTdDw_DDlS8K-M';
 var HEADERS={'apikey':SB_KEY,'Authorization':'Bearer '+SB_KEY,'Content-Type':'application/json'};
 var prayers=[];var editingId=null;var PASS='';
-var CATS=['Family','Friends','Nation','World','Thanksgiving'];
+var CATS=['Personal','Family','Friends','Nation','World','Thanksgiving'];
 async function rpc(name,body){
 var r=await fetch(SB_URL+'/rest/v1/rpc/'+name,{method:'POST',headers:HEADERS,body:JSON.stringify(body)});
 if(!r.ok){throw new Error('rpc failed');}

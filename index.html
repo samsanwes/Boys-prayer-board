@@ -41,7 +41,7 @@ h2{font-size:22px;font-weight:normal;margin:26px 0 12px;padding-bottom:6px;borde
 <label for="ptext">Prayer request</label>
 <textarea id="ptext" placeholder="What shall we pray for?"></textarea>
 <label for="pcat">This is for</label>
-<select id="pcat"><option>Family</option><option>Friends</option><option>Nation</option><option>World</option><option>Thanksgiving</option></select>
+<select id="pcat"><option>Personal</option><option>Family</option><option>Friends</option><option>Nation</option><option>World</option><option>Thanksgiving</option></select>
 <label for="pby">Your name (optional)</label>
 <input type="text" id="pby" placeholder="e.g. John">
 <button class="btn" onclick="addPrayer()">Add to the board</button>
@@ -100,7 +100,7 @@ function buildWeek(){
 var active=prayers.filter(function(p){return !p.answered;});
 var thanks=prayers.filter(function(p){return p.answered;}).concat(active.filter(function(p){return p.category==='Thanksgiving';}));
 var seen={};thanks=thanks.filter(function(p){if(seen[p.id]){return false;}seen[p.id]=true;return true;});
-return {active:active.filter(function(p){return p.category!=='Thanksgiving';}),thanks:thanks,order:['Family','Friends','Nation','World']};
+return {active:active.filter(function(p){return p.category!=='Thanksgiving';}),thanks:thanks,order:['Personal','Family','Friends','Nation','World']};
 }
 function entryHtml(p,answered){
 var by=p.added_by?'<div class="mby">Added by '+esc(p.added_by)+'</div>':'<div class="mby"></div>';
