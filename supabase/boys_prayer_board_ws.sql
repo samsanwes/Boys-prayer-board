@@ -9,8 +9,8 @@
 --   RPCs   : admin_check_ws, admin_answered_ws, admin_edit2_ws,
 --            admin_delete_ws, admin_swap_order_ws
 --
--- BEFORE RUNNING: replace CHANGE-ME-PASSCODE (one place, near the bottom)
--- with the keeper passcode you want for this board.
+-- Run this whole file first, then set the passcode with the one-line
+-- command described at the bottom.
 -- =====================================================================
 
 create extension if not exists pgcrypto with schema extensions;
@@ -172,15 +172,32 @@ grant execute on function public.admin_delete_ws(text, uuid)                to a
 grant execute on function public.admin_swap_order_ws(text, uuid, uuid)      to anon, authenticated;
 
 -- ---------------------------------------------------------------------
--- 4. Set the keeper passcode  <<< EDIT THIS LINE >>>
+-- 4. Passcode helper (dashboard-only; NOT callable through the API)
 -- ---------------------------------------------------------------------
--- Stored as a bcrypt hash; the plain passcode is never kept in the database.
--- Re-run just this statement any time you want to change the passcode.
-insert into public.admin_config_ws (key, value)
-values ('passcode_hash', extensions.crypt('CHANGE-ME-PASSCODE', extensions.gen_salt('bf')))
-on conflict (key) do update set value = excluded.value;
+create or replace function public.set_keeper_passcode_ws(newpass text)
+returns text
+language plpgsql
+security definer
+set search_path = public, extensions
+as $$
+begin
+  if newpass is null or length(newpass) < 4 then
+    raise exception 'passcode must be at least 4 characters';
+  end if;
+  insert into public.admin_config_ws (key, value)
+  values ('passcode_hash', extensions.crypt(newpass, extensions.gen_salt('bf')))
+  on conflict (key) do update set value = excluded.value;
+  return 'Keeper passcode set';
+end;
+$$;
+revoke all on function public.set_keeper_passcode_ws(text) from public, anon, authenticated;
 
 -- ---------------------------------------------------------------------
--- 5. Quick self-test (optional) — should return true
+-- 5. AFTER running the above, set your passcode by running this ONE line
+--    in the SQL editor (replace the text inside the quotes):
+--
+--    select set_keeper_passcode_ws('your passcode here');
+--
+--    Run the same line again any time you want to change it.
+--    Check it with:   select admin_check_ws('your passcode here');  -> true
 -- ---------------------------------------------------------------------
--- select public.admin_check_ws('CHANGE-ME-PASSCODE');
