@@ -3,7 +3,8 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Boys Prayer Board</title>
+<title>Manage - Boys Prayer Board</title>
+<meta name="robots" content="noindex">
 <style>
 :root{--ink:#0b1f5c;--soft:#4a5a85;--bg:#e3eaf7;--card:#ffffff;--gold:#1e4fa8;--green:#2e7d4f;--red:#a33;--line:#c9d7ef;}
 *{box-sizing:border-box;margin:0;padding:0;}
@@ -41,41 +42,24 @@ h3{font-size:19px;font-weight:normal;color:var(--soft);margin:18px 0 10px;}
 </head>
 <body>
 <header>
-<h1>Boys Prayer Board</h1>
-<p>Wednesday Bible Study</p>
-<button class="btn" style="margin-top:14px;" onclick="showList()">This week's prayer list</button>
+<h1>Manage the board</h1>
+<p>Boys Prayer Board</p>
+<a class="small-btn" href="/" style="display:inline-block;margin-top:14px;text-decoration:none;">&#8592; Back to the board</a>
 </header>
 <main>
-<div class="box">
-<h2 style="margin-top:0;">Add a prayer request</h2>
-<label for="ppoint">Prayer point (who or what this is for)</label>
-<input type="text" id="ppoint" placeholder="e.g. Roshan's Health">
-<label for="ptext">Prayer request</label>
-<textarea id="ptext" placeholder="What shall we pray for?"></textarea>
-<label for="pcat">This is for</label>
-<select id="pcat"><option>Personal</option><option>Family</option><option>Friends</option><option>Nation</option><option>World</option><option>Thanksgiving</option></select>
-<label for="pby">Your name</label>
-<input type="text" id="pby" placeholder="e.g. Roshan">
-<button class="btn" onclick="addPrayer()">Add to the board</button>
-<div class="status" id="status"></div>
-</div>
-
-<div class="box" style="text-align:center;">
-<p style="color:var(--soft);font-size:17px;margin-bottom:12px;">Need to edit, reorder, mark a prayer answered or remove one?</p>
-<a class="btn" href="/manage" style="text-decoration:none;">Manage the board</a>
-</div>
+<div class="status" id="manageStatus"></div>
+<h2>Praying for</h2>
+<p style="color:var(--soft);font-size:16px;">Use the arrows to change the reading order within each category. The weekly list follows this order.</p>
+<div id="activeList"><div class="empty">Loading...</div></div>
+<h2>Thanksgiving (answered)</h2>
+<div id="answeredList"></div>
+<h2>Backup</h2>
+<p style="color:var(--soft);font-size:17px;margin-bottom:12px;">Copy the whole board as plain text, then paste it into an email or note to keep it safe.</p>
+<button class="btn" onclick="exportBoard()">Copy board for backup</button>
+<div class="status" id="exportStatus"></div>
+<textarea id="exportText" style="display:none;min-height:200px;font-size:16px;margin-top:12px;" readonly></textarea>
+<p style="margin-top:24px;text-align:center;"><a href="/" style="color:var(--soft);font-size:16px;">Back to the board</a></p>
 </main>
-
-<div id="listView">
-<div style="max-width:640px;margin:0 auto;">
-<button class="small-btn" onclick="hideList()">Back to board</button>
-<button class="small-btn" style="float:right;" onclick="copyList()">Copy list</button>
-<div id="listCopyStatus" style="clear:both;text-align:center;color:var(--green);font-size:16px;min-height:20px;"></div>
-<h1 style="font-size:32px;font-weight:normal;margin:20px 0 4px;text-align:center;">This Week's Prayer List</h1>
-<p id="listDate" style="text-align:center;color:var(--soft);font-size:18px;margin-bottom:24px;"></p>
-<div id="listBody"><div class="empty">Loading...</div></div>
-</div>
-</div>
 <script>var BOARD={"table": "prayers_ws", "cats": ["Personal", "Family", "Friends", "Nation", "World", "Thanksgiving"], "addedMsg": "Added to the board. It will appear in this week's prayer list.", "waHeader": "Boys Prayer Board - This Week's Prayer List", "backupHeader": "BOYS PRAYER BOARD", "nameRequired": true, "showAddedBy": true};</script>
 <script src="/board.js"></script>
 </body>
