@@ -57,7 +57,9 @@ return '<div class="meta">'+by+fmtDate(p.created_at)+upd+'</div>';
 }
 function cardHtml(p,idx,count){
 if(p.id===editingId){
-return '<div class="prayer">'+metaLine(p)+'<input id="editPoint" value="'+esc(p.name)+'"><textarea id="editArea">'+esc(p.text)+'</textarea><div class="actions"><button class="small-btn answer" onclick="saveEdit(\''+p.id+'\')">Save changes</button><button class="small-btn" onclick="cancelEdit()">Cancel</button></div></div>';
+var cats=CATS.slice();if(p.category&&cats.indexOf(p.category)<0){cats.push(p.category);}
+var sel='<select id="editCat">'+cats.map(function(c){return '<option'+(c===p.category?' selected':'')+'>'+esc(c)+'</option>';}).join('')+'</select>';
+return '<div class="prayer">'+metaLine(p)+'<input id="editPoint" value="'+esc(p.name)+'"><textarea id="editArea">'+esc(p.text)+'</textarea>'+sel+'<div class="actions"><button class="small-btn answer" onclick="saveEdit(\''+p.id+'\')">Save changes</button><button class="small-btn" onclick="cancelEdit()">Cancel</button></div></div>';
 }
 var up=idx>0?'':'disabled';
 var down=idx<count-1?'':'disabled';
@@ -112,8 +114,10 @@ var pt=document.getElementById('editPoint');
 var t=document.getElementById('editArea');
 var np=pt?pt.value.trim():'';
 var v=t?t.value.trim():'';
+var cs=document.getElementById('editCat');var nc=cs?cs.value:null;
 if(!np||!v){return;}
-try{await api('PATCH','?id=eq.'+id,{name:np,text:v,edited:new Date().toISOString()});editingId=null;await refresh();setStatus('manageStatus','Saved.');}
+var patch={name:np,text:v,edited:new Date().toISOString()};if(nc){patch.category=nc;}
+try{await api('PATCH','?id=eq.'+id,patch);editingId=null;await refresh();setStatus('manageStatus','Saved.');}
 catch(e){setStatus('manageStatus','Could not save the edit. Try again.');}
 }
 async function removePrayer(id){
